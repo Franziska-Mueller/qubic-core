@@ -8,8 +8,8 @@
 // If you get an error reading and writing files, set the chunk sizes below to
 // the cluster size set for formatting you disk. If you have no idea about the
 // cluster size, try 32768.
-#define READING_CHUNK_SIZE 1048576
-#define WRITING_CHUNK_SIZE 1048576
+#define READING_CHUNK_SIZE 32678
+#define WRITING_CHUNK_SIZE 32678
 #define FILE_CHUNK_SIZE (209715200ULL) // for large file saving
 #define VOLUME_LABEL L"Qubic"
 
