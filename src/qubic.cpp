@@ -3050,6 +3050,11 @@ static void beginEpoch()
     numberOfTransactions = 0;
 #if TICK_STORAGE_AUTOSAVE_MODE
     ts.initMetaData(system.epoch); // for save/load state
+    if (loadMiningSeedFromFile)
+    {
+        score->initMiningData(initialRandomSeedFromPersistingState);
+        loadMiningSeedFromFile = false;;
+    }
 #endif
 }
 
