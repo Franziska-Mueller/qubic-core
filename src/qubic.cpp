@@ -103,7 +103,10 @@ static m256i arbitratorPublicKey;
 BroadcastComputors broadcastedComputors;
 
 // data closely related to system
-static int solutionPublicationTicks[MAX_NUMBER_OF_SOLUTIONS];
+static int solutionPublicationTicks[MAX_NUMBER_OF_SOLUTIONS]; // scheduled tick to broadcast solution, -1 means already broadcasted, -2 means obsolete solution
+#define SOLUTION_RECORDED_FLAG -1
+#define SOLUTION_OBSOLETE_FLAG -2
+
 static unsigned long long faultyComputorFlags[(NUMBER_OF_COMPUTORS + 63) / 64];
 static unsigned int tickNumberOfComputors = 0, tickTotalNumberOfComputors = 0, futureTickTotalNumberOfComputors = 0;
 static unsigned int nextTickTransactionsSemaphore = 0, numberOfNextTickTransactions = 0, numberOfKnownNextTickTransactions = 0;
@@ -2332,7 +2335,7 @@ static void processTickTransactionSolution(const Transaction* transaction, const
                             && solution_miningSeed == system.solutions[j].miningSeed
                             && transaction->sourcePublicKey == system.solutions[j].computorPublicKey)
                         {
-                            solutionPublicationTicks[j] = -1;
+                            solutionPublicationTicks[j] = SOLUTION_RECORDED_FLAG;
 
                             break;
                         }
@@ -2343,7 +2346,7 @@ static void processTickTransactionSolution(const Transaction* transaction, const
                         system.solutions[system.numberOfSolutions].computorPublicKey = transaction->sourcePublicKey;
                         system.solutions[system.numberOfSolutions].miningSeed = solution_miningSeed;
                         system.solutions[system.numberOfSolutions].nonce = solution_nonce;
-                        solutionPublicationTicks[system.numberOfSolutions++] = -1;
+                        solutionPublicationTicks[system.numberOfSolutions++] = SOLUTION_RECORDED_FLAG;
                     }
 
                     RELEASE(solutionsLock);
@@ -2464,7 +2467,7 @@ static void processTickTransactionSolution(const Transaction* transaction, const
                         && solution_miningSeed == system.solutions[j].miningSeed
                         && transaction->sourcePublicKey == system.solutions[j].computorPublicKey)
                     {
-                        solutionPublicationTicks[j] = -1;
+                        solutionPublicationTicks[j] = SOLUTION_RECORDED_FLAG;
 
                         break;
                     }
@@ -2475,7 +2478,7 @@ static void processTickTransactionSolution(const Transaction* transaction, const
                     system.solutions[system.numberOfSolutions].computorPublicKey = transaction->sourcePublicKey;
                     system.solutions[system.numberOfSolutions].miningSeed = solution_miningSeed;
                     system.solutions[system.numberOfSolutions].nonce = solution_nonce;
-                    solutionPublicationTicks[system.numberOfSolutions++] = -1;
+                    solutionPublicationTicks[system.numberOfSolutions++] = SOLUTION_RECORDED_FLAG;
                 }
 
                 RELEASE(solutionsLock);
@@ -2922,7 +2925,15 @@ static void processTick(unsigned long long processorNumber)
                 {
                     if (solutionPublicationTicks[j] <= (int)system.tick)
                     {
-                        solutionIndexToPublish = j;
+                        if (system.solutions[j].miningSeed == score->initialRandomSeed)
+                        {
+                            solutionIndexToPublish = j;
+                        }
+                        else
+                        {
+                            // obsolete solution
+                            solutionPublicationTicks[j] = SOLUTION_OBSOLETE_FLAG;
+                        }
                     }
 
                     break;
@@ -2960,7 +2971,7 @@ static void processTick(unsigned long long processorNumber)
                 solutionPublicationTicks[solutionIndexToPublish] = payload.transaction.tick = system.tick + MIN_MINING_SOLUTIONS_PUBLICATION_OFFSET + random % MIN_MINING_SOLUTIONS_PUBLICATION_OFFSET;
                 payload.transaction.inputType = 0;
                 payload.transaction.inputSize = sizeof(payload.miningSeed) + sizeof(payload.nonce);
-                payload.miningSeed = score->initialRandomSeed;
+                payload.miningSeed = system.solutions[solutionIndexToPublish].miningSeed;
                 payload.nonce = system.solutions[solutionIndexToPublish].nonce;
 
                 unsigned char digest[32];
@@ -5712,16 +5723,20 @@ static void processKeyPresses()
             appendText(message, L".");
             logToConsole(message);
 
-            unsigned int numberOfPublishedSolutions = 0, numberOfRecordedSolutions = 0;
+            unsigned int numberOfPublishedSolutions = 0, numberOfRecordedSolutions = 0, numberOfObsoleteSolutions = 0;
             for (unsigned int i = 0; i < system.numberOfSolutions; i++)
             {
                 if (solutionPublicationTicks[i])
                 {
                     numberOfPublishedSolutions++;
 
-                    if (solutionPublicationTicks[i] < 0)
+                    if (solutionPublicationTicks[i] == SOLUTION_RECORDED_FLAG)
                     {
                         numberOfRecordedSolutions++;
+                    }
+                    else if (solutionPublicationTicks[i] == SOLUTION_OBSOLETE_FLAG)
+                    {
+                        numberOfObsoleteSolutions++;
                     }
                 }
             }
@@ -5729,6 +5744,8 @@ static void processKeyPresses()
             appendText(message, L"/");
             appendNumber(message, numberOfPublishedSolutions, TRUE);
             appendText(message, L"/");
+            appendNumber(message, numberOfObsoleteSolutions, TRUE);
+            appendText(message, L"/");            
             appendNumber(message, system.numberOfSolutions, TRUE);
             appendText(message, L" solutions.");
             logToConsole(message);
