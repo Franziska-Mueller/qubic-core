@@ -207,7 +207,7 @@ struct ScoreFunction
             setMem(_modNum, sizeof(_modNum), 0);
 
             // init the divisible table
-            for (int i = 1; i <= maxInputDuration; i++) {
+            for (int i = 1; i <= maxDuration; i++) {
                 for (int j = 1; j <= 127; j++) { // exclude 128
                     if (j && i % j == 0) {
                         _modNum[i][_totalModNum[i]++] = j;
