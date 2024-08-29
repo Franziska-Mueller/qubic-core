@@ -89,4 +89,4 @@ static unsigned short REVENUE_FILE_NAME[] = L"revenueScore"; // TODO: for testin
 #define STACK_SIZE 4194304
 #define TRACK_MAX_STACK_BUFFER_SIZE
 
-#define TESTNET_EPOCH_DURATION 3000
+#define TESTNET_EPOCH_DURATION 7000
