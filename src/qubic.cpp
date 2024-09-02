@@ -3825,6 +3825,7 @@ static bool loadAllNodeStates()
 
 static void tickProcessor(void*)
 {
+    addDebugMessage(L"Entering tickProcessor");
     enableAVX();
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
@@ -3838,6 +3839,7 @@ static void tickProcessor(void*)
 #endif
 
     unsigned int latestProcessedTick = 0;
+    addDebugMessage(L"Entering tick loop");
     while (!shutDownNode)
     {
         checkinTime(processorNumber);
@@ -3875,7 +3877,9 @@ static void tickProcessor(void*)
                         while (requestPersistingNodeState) _mm_pause();
                         persistingNodeStateTickProcWaiting = 0;
                     }
+                    addDebugMessage(L"Entering processTick");
                     processTick(processorNumber);
+                    addDebugMessage(L"Finished processTick");
                     latestProcessedTick = system.tick;
                 }
 
