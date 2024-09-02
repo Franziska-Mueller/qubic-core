@@ -4369,8 +4369,24 @@ static void tickProcessor(void*)
                                                     // only count votes that matched etalonTick
                                                     voteCounter.registerNewVote(tick->tick, tick->computorIndex);
                                                 }
+                                                else
+                                                {
+                                                    if (system.tick == 15591060) while (1) addDebugMessage(L"Error 4!!!");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (system.tick == 15591060) while (1) addDebugMessage(L"Error 2!!!");
                                             }
                                         }
+                                        else
+                                        {
+                                            if (system.tick == 15591060) while (1) addDebugMessage(L"Error 1!!!");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (system.tick == 15591060) while (1) addDebugMessage(L"Error 0!!!");
                                     }
                                 }
                             }
