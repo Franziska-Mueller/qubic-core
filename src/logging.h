@@ -242,6 +242,7 @@ public:
 #if ENABLED_LOGGING
         if (getLogId(ptr) != logId)
         {
+            addDebugMessage(L"LOGGER: Mismatched log Id");
             return false;
         }
         unsigned long long computedLogDigest = 0;
@@ -250,11 +251,13 @@ public:
         if (msgSize >= RequestResponseHeader::max_size)
         {
             // invalid size
+            addDebugMessage(L"LOGGER: invalid size");
             return false;
         }
         KangarooTwelve(ptr + LOG_HEADER_SIZE, msgSize, &computedLogDigest, 8);
         if (logDigest != computedLogDigest)
         {
+            addDebugMessage(L"LOGGER: mismatched digest");
             return false;
         }
 #endif
@@ -280,6 +283,7 @@ public:
             {
                 return res.startIndex;
             }
+            addDebugMessage(L"LOGGER: Failed to verify log #0");
             return -1;
         }
 
@@ -290,6 +294,7 @@ public:
             {
                 return res;
             }
+            addDebugMessage(L"LOGGER: Failed to verify log #1");
             return BlobInfo{ -1,-1 };
         }
 
@@ -322,6 +327,14 @@ public:
             {
                 return mapTxToLogId[tickOffset * LOG_TX_PER_TICK + txId];
             }
+            {
+                CHAR16 tmp[256];
+                setText(tmp, L"LOGGER: #1 tickOffset is too large. Tick ");
+                appendNumber(tmp, tick, true);
+                appendText(tmp, L" | tickBegin ");
+                appendNumber(tmp, tickBegin, true);
+                addDebugMessage(tmp);
+            }
             return BlobInfo{ -1,-1 };
         }
 
@@ -350,7 +363,15 @@ public:
                 {
                     ASSERT(txInfo.startIndex != -1);
                     txInfo.length++;
-                }                
+                }
+            }
+            {
+                CHAR16 tmp[256];
+                setText(tmp, L"LOGGER: #2 tickOffset is too large. Tick ");
+                appendNumber(tmp, tick, true);
+                appendText(tmp, L" | tickBegin ");
+                appendNumber(tmp, tickBegin, true);
+                addDebugMessage(tmp);
             }
         }
     } tx;
