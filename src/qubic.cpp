@@ -3678,38 +3678,55 @@ static bool saveAllNodeStates()
 
 bool verifyTickStorage()
 {
-    unsigned int tickIndex = ts.tickToIndexCurrentEpoch(system.tick);
-    bs->CopyMem(&nextTickData, &ts.tickData[tickIndex], sizeof(TickData));
-    ASSERT(nextTickData.epoch == system.epoch);
-    if (nextTickData.epoch == system.epoch)
+    for (int t = system.tick - 50; t <= system.tick; t++)
     {
-        auto* tsCurrentTickTransactionOffsets = ts.tickTransactionOffsets.getByTickIndex(tickIndex);
-        // pre-scan any solution tx and add them to solution task queue
-        for (unsigned int transactionIndex = 0; transactionIndex < NUMBER_OF_TRANSACTIONS_PER_TICK; transactionIndex++)
+        setText(message, L"Checking tick ");
+        appendNumber(message, t, true);
+        logToConsole(message);
+        unsigned int tickIndex = ts.tickToIndexCurrentEpoch(system.tick);
+        bs->CopyMem(&nextTickData, &ts.tickData[tickIndex], sizeof(TickData));
+        ASSERT(nextTickData.epoch == system.epoch);
+        if (nextTickData.epoch == system.epoch)
         {
-            if (!isZero(nextTickData.transactionDigests[transactionIndex]))
+            auto* tsCurrentTickTransactionOffsets = ts.tickTransactionOffsets.getByTickIndex(tickIndex);
+            // pre-scan any solution tx and add them to solution task queue
+            for (unsigned int transactionIndex = 0; transactionIndex < NUMBER_OF_TRANSACTIONS_PER_TICK; transactionIndex++)
             {
-                if (tsCurrentTickTransactionOffsets[transactionIndex])
+                if (!isZero(nextTickData.transactionDigests[transactionIndex]))
                 {
-                    Transaction* transaction = ts.tickTransactions(tsCurrentTickTransactionOffsets[transactionIndex]);
-                    ASSERT(transaction->checkValidity());
-                    ASSERT(transaction->tick == system.tick);
-                    if (transaction->tick != system.tick)
+                    if (tsCurrentTickTransactionOffsets[transactionIndex])
                     {
-                        CHAR16 tmp[256];
-                        setText(tmp, L"Corrupted data tx->tick: ");
-                        appendNumber(tmp, transaction->tick, true);
-                        appendText(tmp, L" | Tick: ");
-                        appendNumber(tmp, system.tick, true);
-                        logToConsole(tmp);
+                        Transaction* transaction = ts.tickTransactions(tsCurrentTickTransactionOffsets[transactionIndex]);
+                        ASSERT(transaction->checkValidity());
+                        ASSERT(transaction->tick == system.tick);
+                        if (transaction->tick != system.tick)
+                        {
+                            CHAR16 tmp[256];
+                            setText(tmp, L"Corrupted data tx->tick: ");
+                            appendNumber(tmp, transaction->tick, true);
+                            appendText(tmp, L" | Tick: ");
+                            appendNumber(tmp, system.tick, true);
+                            logToConsole(tmp);
+                        }
+                        {
+                            m256i digest;
+                            size_t size = sizeof(Transaction) + transaction->inputSize;
+                            KangarooTwelve(transaction, size, &digest, sizeof(digest));
+                            unsigned char* sig = transaction->signaturePtr();
+                            bool ok = verify(transaction->sourcePublicKey.m256i_u8, digest.m256i_u8, sig);
+                            if (!ok)
+                            {
+                                logToConsole(L"Corrupted data Signature is mismatched");
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-    else
-    {
-        return false;
+        else
+        {
+            logToConsole(L"Corrupted data: Malformed epoch number");
+        }
     }
     return true;
 }
