@@ -3676,6 +3676,35 @@ static bool saveAllNodeStates()
     return true;
 }
 
+bool verifyTickStorage()
+{
+    unsigned int tickIndex = ts.tickToIndexCurrentEpoch(system.tick);
+    bs->CopyMem(&nextTickData, &ts.tickData[tickIndex], sizeof(TickData));
+    ASSERT(nextTickData.epoch == system.epoch);
+    if (nextTickData.epoch == system.epoch)
+    {
+        auto* tsCurrentTickTransactionOffsets = ts.tickTransactionOffsets.getByTickIndex(tickIndex);
+        // pre-scan any solution tx and add them to solution task queue
+        for (unsigned int transactionIndex = 0; transactionIndex < NUMBER_OF_TRANSACTIONS_PER_TICK; transactionIndex++)
+        {
+            if (!isZero(nextTickData.transactionDigests[transactionIndex]))
+            {
+                if (tsCurrentTickTransactionOffsets[transactionIndex])
+                {
+                    Transaction* transaction = ts.tickTransactions(tsCurrentTickTransactionOffsets[transactionIndex]);
+                    ASSERT(transaction->checkValidity());
+                    ASSERT(transaction->tick == system.tick);
+                }
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
+
 static bool loadAllNodeStates()
 {
     CHAR16 directory[16];
@@ -3822,6 +3851,7 @@ static bool loadAllNodeStates()
     logToConsole(L"Initializing logger");
     logger.reset(system.initialTick); // initialize the logger
 #endif
+    verifyTickStorage();
     return true;
 }
 
