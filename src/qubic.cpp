@@ -3694,6 +3694,15 @@ bool verifyTickStorage()
                     Transaction* transaction = ts.tickTransactions(tsCurrentTickTransactionOffsets[transactionIndex]);
                     ASSERT(transaction->checkValidity());
                     ASSERT(transaction->tick == system.tick);
+                    if (transaction->tick != system.tick)
+                    {
+                        CHAR16 tmp[256];
+                        setText(tmp, L"Corrupted data tx->tick: ");
+                        appendNumber(tmp, transaction->tick, true);
+                        appendText(tmp, L" | Tick: ");
+                        appendNumber(tmp, system.tick, true);
+                        logToConsole(tmp);
+                    }
                 }
             }
         }
