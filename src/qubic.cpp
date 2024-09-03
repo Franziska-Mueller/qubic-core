@@ -3682,7 +3682,7 @@ bool verifyTickStorage()
     {
         setText(message, L"Checking tick ");
         appendNumber(message, t, true);
-        logToConsole(message);
+        addDebugMessage(message);
         unsigned int tickIndex = ts.tickToIndexCurrentEpoch(system.tick);
         bs->CopyMem(&nextTickData, &ts.tickData[tickIndex], sizeof(TickData));
         ASSERT(nextTickData.epoch == system.epoch);
@@ -3706,7 +3706,7 @@ bool verifyTickStorage()
                             appendNumber(tmp, transaction->tick, true);
                             appendText(tmp, L" | Tick: ");
                             appendNumber(tmp, system.tick, true);
-                            logToConsole(tmp);
+                            addDebugMessage(tmp);
                         }
                         {
                             m256i digest;
@@ -3716,7 +3716,23 @@ bool verifyTickStorage()
                             bool ok = verify(transaction->sourcePublicKey.m256i_u8, digest.m256i_u8, sig);
                             if (!ok)
                             {
-                                logToConsole(L"Corrupted data Signature is mismatched");
+                                addDebugMessage(L"Corrupted data Signature is mismatched");
+                                bool zero = true;
+                                for (int i = 0; i < sizeof(Transaction); i++)
+                                {
+                                    if (((unsigned char*)transaction)[i] != 0)
+                                    {
+                                        zero = false;
+                                    }
+                                }
+                                if (zero)
+                                {
+                                    addDebugMessage(L"Transaction is zero");
+                                }
+                                if (isZero(((m256i*)sig)[0]))
+                                {
+                                    addDebugMessage(L"Signature is zero");
+                                }
                             }
                         }
                     }
@@ -3725,7 +3741,7 @@ bool verifyTickStorage()
         }
         else
         {
-            logToConsole(L"Corrupted data: Malformed epoch number");
+            addDebugMessage(L"Corrupted data: Malformed epoch number");
         }
     }
     return true;
