@@ -91,6 +91,32 @@ void updateAndAnalzeEntityCategoryPopulations()
     }
 }
 
+void printEntityCategoryPopulations()
+{
+    static constexpr int entityCategoryCount = sizeof(entityCategoryPopulations) / sizeof(entityCategoryPopulations[0]);
+    for (int i = 0; i < entityCategoryCount; ++i)
+    {
+        if (entityCategoryPopulations[i])
+        {
+            unsigned long long lowerBound = (1llu << i), upperBound = (1llu << (i + 1)) - 1;
+            const CHAR16* burnIndicator = L"\t+ bin ";
+            if (lowerBound <= dustThresholdBurnAll)
+                burnIndicator = L"\t- bin ";
+            else if (lowerBound <= dustThresholdBurnHalf)
+                burnIndicator = L"\t* bin ";
+            setText(message, burnIndicator);
+            appendNumber(message, i, FALSE);
+            appendText(message, L": ");
+            appendNumber(message, entityCategoryPopulations[i], FALSE);
+            appendText(message, L" entities with amount in range ");
+            appendNumber(message, lowerBound, TRUE);
+            appendText(message, L" to ");
+            appendNumber(message, upperBound, TRUE);
+            logToConsole(message);
+        }
+    }
+}
+
 // Clean up spectrum hash map, removing all entities with balance 0. Updates spectrumInfo.
 static void reorganizeSpectrum()
 {

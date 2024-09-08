@@ -5599,6 +5599,12 @@ static void processKeyPresses()
             appendText(message, L".");
             logToConsole(message);
 
+            setText(message, L"Entity balance dust threshold: ");
+            updateAndAnalzeEntityCategoryPopulations();
+            appendNumber(message, (dustThresholdBurnAll > dustThresholdBurnHalf) ? dustThresholdBurnAll : dustThresholdBurnHalf, TRUE);
+            logToConsole(message);
+            printEntityCategoryPopulations();
+
             unsigned int numberOfPublishedSolutions = 0, numberOfRecordedSolutions = 0, numberOfObsoleteSolutions = 0;
             for (unsigned int i = 0; i < system.numberOfSolutions; i++)
             {
