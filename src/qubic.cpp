@@ -1245,9 +1245,13 @@ static void checkinTime(unsigned long long processorNumber)
     threadTimeCheckin[processorNumber].day = time.Day;
 }
 
+static m256i constantMiningSeed;
 static void setNewMiningSeed()
 {
-    score->initMiningData(spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1]);
+    //score->initMiningData(spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1]);
+    setMem(constantMiningSeed.m256i_u8, 32, 0);
+    constantMiningSeed.m256i_u8[31] = 1;
+    score->initMiningData(constantMiningSeed);
 }
 
 static void checkAndSwitchMiningPhase()
