@@ -2669,10 +2669,10 @@ static void processTick(unsigned long long processorNumber)
                     const int spectrumIndex = ::spectrumIndex(transaction->sourcePublicKey);
                     if (spectrumIndex >= 0)
                     {
-                        if (transaction->destinationPublicKey == arbitratorPublicKey)
+                        if ((transaction->destinationPublicKey == arbitratorPublicKey && !transaction->amount) ||
+                            (isZero(transaction->destinationPublicKey) && transaction->amount >= MiningSolutionTransaction::minAmount()))
                         {
-                            if (!transaction->amount
-                                && transaction->inputSize == 32 + 32
+                            if (transaction->inputSize == 32 + 32
                                 && !transaction->inputType)
                             {
                                 const m256i& solution_miningSeed = *(m256i*)transaction->inputPtr();
